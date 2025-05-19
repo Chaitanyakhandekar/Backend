@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node assignment3.js"
+    "start": "node index.js"
   },
   "author": "chaitanya khandekar",
   "license": "ISC",
