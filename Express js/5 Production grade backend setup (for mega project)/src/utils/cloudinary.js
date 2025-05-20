@@ -7,7 +7,7 @@ cloudinary.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-const uploadFileOnCloudinary = async function(localFilePath){   //! we assume that we already stored file on Local folder at "Public/temp"
+export const uploadFileOnCloudinary = async function(localFilePath){   //! we assume that we already stored file on Local folder at "Public/temp"
     try {
         if(!localFilePath) return null
 
