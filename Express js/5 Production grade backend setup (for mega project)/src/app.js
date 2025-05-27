@@ -5,7 +5,7 @@ import cors from 'cors'
 const server = express()
 
 server.use(cors({
-    origin:process.env.ALLOW_ORIGIN,
+    origin:process.env.ALLOW_ORIGIN || "*",
     credentials:true
 }))
 

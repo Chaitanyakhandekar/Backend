@@ -11,6 +11,7 @@ class ApiError extends Error{
         this.errors = errors,
         this.success=false,
         this.data=null
+        this.stack=stack
     }
 }
 
