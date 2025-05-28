@@ -1,9 +1,12 @@
 import {asyncHandler} from '../utils/asyncHandler.js'
+
 import {ApiError} from "../utils/apiError.js"
 import {ApiResponse} from "../utils/apiResponse.js"
 import { User } from '../models/user.model.js'
 import {uploadFileOnCloudinary} from '../utils/cloudinary.js'
 import {generateAccessAndRefreshToken} from "../utils/generateARTokens.js"
+import jwt from "jsonwebtoken"
+import { cookieOptions } from '../constants.js'
 
 const registerUser = asyncHandler(async (req,res)=>{
 
@@ -93,15 +96,10 @@ const loginUser = asyncHandler(async (req,res)=>{
    // send success message or response}
 
 
-   /* TODO: resolve issue of undefined email*/
-   // const {email,username,password} = req.body
-
-   const email = 'rohan@gmail.com'
-   const username = 'rohan'
-   const password = 'chaitanya13114'
+   const {email,username,password} = req.body
 
    if(!username && !email){
-      throw new ApiError(400 , "username or email is required!")
+      throw new ApiError(400 , "username and email is required!")
    }
 
    const user = await User.findOne({
@@ -169,8 +167,49 @@ const logoutUser = asyncHandler(async (req,res)=>{
             )
 })
 
+const refreshAccessToken = asyncHandler(async (req,res)=>{
+
+   const incomingRefreshToken = req.cookies?.refreshToken
+
+   if(!incomingRefreshToken){
+      throw new ApiError(401,"Unauthorized request")
+   }
+
+   let decodedToken;
+
+    try {
+      decodedToken = jwt.verify(incomingRefreshToken , process.env.REFRESH_TOKEN_SECRET)
+    } catch (error) {
+         throw new ApiError(401,"Refresh Token Expired or used")
+    }
+
+   const user = await User.findById(decodedToken._id)
+
+   if(!user){
+      throw new ApiError(500,"User not found! ")
+   }
+
+   const {accessToken , newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+
+   return res.status(200)
+             .cookie("accessToken",accessToken,cookieOptions)
+             .cookie("refreshToken",newRefreshToken,cookieOptions)
+             .json(
+               new ApiResponse(200,
+                  {
+                     _id:user._id,
+                     username:user.username,
+                     email:user.email,
+                     accessToken,
+                  },
+                  "AccessToken refreshed"
+               )
+             )
+})
+
 export { 
    registerUser,
    loginUser,
-   logoutUser
+   logoutUser,
+   refreshAccessToken
 };
