@@ -207,9 +207,150 @@ const refreshAccessToken = asyncHandler(async (req,res)=>{
              )
 })
 
+const changeCurrentPassword = asyncHandler(async (req,res)=>{     // used verifyJWT middleware
+
+   const {currentPassword , newPassword} = req.body
+
+   if(!(currentPassword && newPassword )){
+      throw new ApiError(400,"All fields are required!")
+   }
+
+   const user = await User.findById(req.user?._id)
+
+   const isCorrect = await user?.isCorrectPassword(currentPassword)
+
+   if(!isCorrect){
+      throw new ApiError(401,"Enter correct password to change password")
+   }
+
+   user.password = newPassword
+   await user.save({validateBeforeSave:false})
+
+   //!  EXTRA : FOR MORE SECURITY PURPOSE
+
+   //const {accessToken , refreshToken} = await generateAccessAndRefreshToken(user._id)
+
+   return res
+            .status(200)
+            // .cookie("accessToken",accessToken,cookieOptions)      // new accessToken
+            // .cookie("refreshToken",refreshToken,cookieOptions)    // new refreshToken
+            .json(
+               new ApiResponse(200,{},"Password updated succesfully")
+            )
+})
+
+const getCurrentUser = asyncHandler(async (req,res)=>{      // used verifyJWT middleware
+   return res
+            .status(200)
+            .json(
+               new ApiResponse(200,req.user,"logged in user fetched succesfuly")
+            )
+
+})
+
+const updateAccountDetails = asyncHandler(async (req,res)=>{   // used verifyJWT middleware   (recheck)
+
+   const {fullName,username} = req.body
+
+   if(!(fullName || username)){
+      throw new ApiError(400,"All fields are required to update the Acxcount Details")
+   }
+
+   let updateFields ={};
+
+   if(fullName) updateFields.fullName = fullName
+   if(username) updateFields.username = username
+
+   const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+         $set:{
+              ...updateFields
+         }
+      },
+      {new:true}     // returns updated user object
+   ).select("-password -refreshToken")
+
+   return res
+            .status(200)
+            .json(
+               new ApiResponse(200,updatedUser,"Account Details Updated Succesfuly")
+            )
+
+})
+
+const updateAvatarImage = asyncHandler(async (req,res)=>{      // used multer and verifyJWT middleware 
+
+      const avatarLocalPath = req.file?.path
+
+      if(!avatarLocalPath){
+         throw new ApiError(400,"Avatar image is required")
+      }
+
+      const avatar = await uploadFileOnCloudinary(avatarLocalPath)
+
+      if(!avatar){
+         throw new ApiError(400,"Error while uploading Avatar Image")
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(
+         req.user._id,
+         {
+            $set:{
+               avatar:avatar.url
+            }
+         },
+         {new:true}  // returns updated user object
+      ).select("-password -refreshToken")
+
+      return res
+               .status(200)
+               .json(
+                  new ApiResponse(200,updatedUser,"Avatar Image updated Successfully")
+               )
+
+})
+
+const updateCoverImage = asyncHandler(async (req,res)=>{       // used multer and verifyJWT middleware 
+
+      const coverImageLocalPath = req.file?.path
+
+      if(!coverImageLocalPath){
+         throw new ApiError(400,"Cover Image is required for updation")
+      }
+
+      const coverImage = await uploadFileOnCloudinary(coverImageLocalPath)
+
+      if(!coverImage){
+         throw new ApiError(400,"Error while uploading Cover Image")
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(
+         req.user._id,
+         {
+            $set:{
+               coverImage:coverImage.url
+            }
+         },
+         {new:true}    // retunrs updated user object
+      ).select("-password -refreshToken")
+
+      return res
+               .status(200)
+               .json(
+                  new ApiResponse(200,updatedUser,"Cover Image updated Successfully")
+               )
+
+})
+
 export { 
    registerUser,
    loginUser,
    logoutUser,
-   refreshAccessToken
+   refreshAccessToken,
+   changeCurrentPassword,
+   getCurrentUser,
+   updateAccountDetails,
+   updateAvatarImage,
+   updateCoverImage
 };
