@@ -343,6 +343,80 @@ const updateCoverImage = asyncHandler(async (req,res)=>{       // used multer an
 
 })
 
+const getUserChannelProfile = asyncHandler(async (req,res)=>{
+
+   const {username} = req.params
+
+   if(!username?.trim()){
+      throw new ApiError(400,"Username is required")
+   }
+
+   const channel = await User.aggregate([
+      {
+         $match:{
+            username:username?.toLowerCase()
+         }
+      },
+      {
+         $lookup:{
+            from:"subscriptions",
+            localField:"_id",
+            foreignField:"channel",
+            as:"subscribers"
+         }
+      },
+      {
+         $lookup:{
+            from:"subscriptions",
+            localField:"_id",
+            foreignField:"subscriber",
+            as:"subscribedTo"
+         }
+      },
+      {
+         $addFields:{
+            subscribersCount:{
+               $size:"$subscribers"
+            },
+            subscribedToCount:{
+               $size:"$subscribedTo"
+            },
+            isSubscribed:{
+               $anyElementTrue:{
+                  $map:{
+                     input:"$subscribers",
+                     as:"sub",
+                     in:{$eq:[req.user._id,"$$sub.subscriber"]}
+                  }
+               }
+            }
+         }
+      },
+      {
+         $project:{
+               username:1,
+               email:1,
+               fullName:1,
+               avatar:1,
+               coverImage:1,
+               subscribersCount:1,
+               subscribedToCount:1,
+               isSubscribed:1
+         }
+      }
+   ])
+
+   if(!channel.length){
+      throw new ApiError(404,"Chennel does not exists")
+   }
+
+   return res
+            .status(200)
+            .json(
+               new ApiResponse(200,channel[0],"Channel fetched succesfully")
+            )
+})
+
 export { 
    registerUser,
    loginUser,
@@ -352,5 +426,6 @@ export {
    getCurrentUser,
    updateAccountDetails,
    updateAvatarImage,
-   updateCoverImage
+   updateCoverImage,
+   getUserChannelProfile,
 };
