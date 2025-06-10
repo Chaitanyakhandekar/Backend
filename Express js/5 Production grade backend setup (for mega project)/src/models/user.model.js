@@ -19,6 +19,12 @@ const userSchema = new Schema({
         unique:true,
         lowercase:true
     },
+    watchHistory:[
+        {
+            type:Schema.Types.ObjectId,
+            ref:"User"
+        }
+    ],
     password:{
         type:String,
         required:true
