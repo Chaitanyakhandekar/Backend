@@ -414,7 +414,7 @@ const getUserChannelProfile = asyncHandler(async (req,res)=>{    // used verifyJ
    return res
             .status(200)
             .json(
-               new ApiResponse(200,channel[0],"Channel fetched succesfully")
+               new ApiResponse(200,channel,"Channel fetched succesfully")
             )
 })
 
