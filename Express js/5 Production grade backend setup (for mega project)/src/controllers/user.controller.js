@@ -346,7 +346,7 @@ const updateCoverImage = asyncHandler(async (req,res)=>{       // used multer an
 
 const getUserChannelProfile = asyncHandler(async (req,res)=>{    // used verifyJWT middleware
 
-   const {username} = req.params
+   const {username} = req.body
 
    if(!username?.trim()){
       throw new ApiError(400,"Username is required")
@@ -414,7 +414,7 @@ const getUserChannelProfile = asyncHandler(async (req,res)=>{    // used verifyJ
    return res
             .status(200)
             .json(
-               new ApiResponse(200,channel,"Channel fetched succesfully")
+               new ApiResponse(200,channel[0],"Channel fetched succesfully")
             )
 })
 
@@ -460,13 +460,20 @@ const getUserWatchHistory = asyncHandler(async (req,res)=>{       // used verify
                   
                ]
             }
+         },
+         {
+            $project:{
+               username:1,
+               email:1,
+               watchedVideos:1
+            }
          }
       ])
 
       return res
                .status(200)
                .json(
-                  new ApiResponse(200,history,"user watchHistory fetched succesfully")
+                  new ApiResponse(200,history[0],"user watchHistory fetched succesfully")
                )
 })
 
