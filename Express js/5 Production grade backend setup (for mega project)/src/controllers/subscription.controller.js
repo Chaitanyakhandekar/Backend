@@ -76,8 +76,72 @@ const unsubscribeFromUser = asyncHandler(async (req,res)=>{  // verifyJWT middle
 
 const getUserSubscribers = asyncHandler(async (req,res)=>{      // verifyJWT middleware
 
-    
-    
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const totalSubscribers = await Subscription.countDocuments({
+        channel:req.user._id
+    })
+
+    const subscribers = await Subscription.aggregate([
+        {
+            $match:{
+                channel:new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $skip:skip
+        },
+        {
+            $limit:limit
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"subscriber",
+                foreignField:"_id",
+                as:"subscriber",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+       {
+            $unwind:"$subscriber"
+       },
+       {
+        $replaceRoot:{
+            newRoot:"$subscriber"
+        }
+       }
+        
+    ])
+
+    if(!subscribers){
+        throw new ApiError(404,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    subscribers,
+                    page,
+                    limit,
+                    totalSubscribers,
+                    totalPages:Math.ceil(totalSubscribers / limit),
+                    hasMore: page * limit < totalSubscribers
+                },
+                "Subscribers Fetched Successfully.")
+            )
+
 })
 
 const getUserSubscriptions = asyncHandler(async (req,res)=>{

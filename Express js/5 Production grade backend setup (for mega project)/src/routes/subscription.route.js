@@ -10,6 +10,9 @@ import{
 
 const router = Router()
 
+// put static routes always at top and Dynamic routes at bottom
+
+router.route("/user-subscribers/").get(verifyJWT,getUserSubscribers)
 router.route("/subscribe/:channel").get(verifyJWT,subscribeToUser)
 router.route("/unsubscribe/:channel").get(verifyJWT,unsubscribeFromUser)
 
