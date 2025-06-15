@@ -22,11 +22,15 @@ server.use(cookieParser())
 
 import userRouter from './routes/user.routes.js'
 import tweetRouter from "./routes/tweet.route.js"
+import commentRouter from "./routes/comment.route.js"
+import subscriptionRouter from "./routes/subscription.route.js"
 
 
 // routes declaration
 
 server.use("/api/v1/users", userRouter)
-server.use("/api/v1/tweets",tweetRouter)
+server.use("/api/v1/tweets", tweetRouter)
+server.use("/api/v1/comments", commentRouter)
+server.use("/api/v1/subscriptions", subscriptionRouter)
 
 export {server}
