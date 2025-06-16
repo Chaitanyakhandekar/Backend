@@ -7,12 +7,12 @@ cloudinary.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-export const uploadFileOnCloudinary = async function(localFilePath){
+export const uploadFileOnCloudinary = async function(localFilePath , resourceType="auto"){
     try {
         if(!localFilePath) return null
 
         const uploadInfo = await cloudinary.uploader.upload(localFilePath , {
-            resource_type:"auto"
+            resource_type:resourceType
         })
 
         fs.unlinkSync(localFilePath)
