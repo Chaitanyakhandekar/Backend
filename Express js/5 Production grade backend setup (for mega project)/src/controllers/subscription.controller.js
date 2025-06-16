@@ -144,11 +144,97 @@ const getUserSubscribers = asyncHandler(async (req,res)=>{      // verifyJWT mid
 
 })
 
-const getUserSubscriptions = asyncHandler(async (req,res)=>{
+const getUserSubscriptions = asyncHandler(async (req,res)=>{    // verifyJWT middleware
+
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const totalUserSubscriptions = await Subscription.countDocuments({
+        subscriber:req.user._id
+    })
+
+    const userSubscriptions = await Subscription.aggregate([
+        {
+            $match:{
+                subscriber:new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $skip:skip
+        },
+        {
+            $limit:limit
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"channel",
+                foreignField:"_id",
+                as:"channel",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind:"$channel"
+        },
+        {
+            $replaceRoot:{
+                newRoot:"$channel"
+            }
+        }
+    ])
+
+    if(!userSubscriptions){
+        throw new ApiError(404,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    userSubscriptions,
+                    page,
+                    limit,
+                    totalUserSubscriptions,
+                    totalPages:Math.ceil(totalUserSubscriptions / limit),
+                    hasMore: (page * limit) < totalUserSubscriptions
+                },
+                "Users Subscriptions Fetched Successfully")
+            )
 
 })
 
-const isSubscribedToUser = asyncHandler(async (req,res)=>{
+const isSubscribedToUser = asyncHandler(async (req,res)=>{      // verifyJWT middleware
+
+    const {channel} = req.params
+
+    if(!channel || !new mongoose.Types.ObjectId(channel) || req.user._id.toString() === channel){
+        throw new ApiError(404,"Invalid User ID's")
+    }
+
+    const isSubscribed = await Subscription.findOne({
+        subscriber:req.user._id,
+        channel
+    })
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    isSubscribed:!!isSubscribed  // returns true Bollean instead of string
+                },
+                "Succefully fetched"
+                )
+            )
 
 })
 
