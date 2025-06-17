@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadFileOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js"
@@ -128,8 +129,110 @@ const getAllVideos = asyncHandler(async (req,res)=>{        // verifyJWT middlew
 
 })
 
+const getVideoById = asyncHandler(async (req,res)=>{        // verifyJWT middleware
+    
+    const {id} = req.params
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const video = await Video.aggregate([
+        {
+            $match:{
+                _id:new mongoose.Types.ObjectId(id)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            fullName:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind:"$owner"
+        },
+        {
+            $project:{
+                __v:0
+            }
+        }
+    ])
+
+    if(!video.length){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,video[0],"Video Fetched Successfully")
+            )
+
+})
+
+const updateVideo = asyncHandler(async (req,res)=>{         // verifyJWT middleware
+
+    const {id ,title , description} = req.body
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const video = await Video.findById(id)
+
+    if(!video){
+        throw new ApiError(400,"Video not found")
+    }
+
+    if(req.user._id.toString() !== video.owner.toString()){
+        throw new ApiError(401,"unauthorized request")
+    }
+
+    if(!(title || description)){
+        throw new ApiError(400,"Atleast one field is required for updation")
+    }
+
+    const updatedVideo = await Video.findByIdAndUpdate(id,
+        {
+            $set:{
+                title:title?.trim() || video.title,
+                description:description?.trim() || video.description
+            }
+        },
+        {
+            new:true
+        }
+    ).select("-__v")
+
+    if(!updatedVideo){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,updatedVideo,"Video Updated Successfully")
+            )
+
+})
+
+
 
 export {
     uploadVideo,
-    getAllVideos
+    getAllVideos,
+    getVideoById,
+    updateVideo
 }

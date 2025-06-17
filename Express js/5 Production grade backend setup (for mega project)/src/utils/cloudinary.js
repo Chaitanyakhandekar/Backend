@@ -7,7 +7,7 @@ cloudinary.config({
     api_secret:process.env.CLOUDINARY_API_SECRET
 })
 
-export const uploadFileOnCloudinary = async function(localFilePath , resourceType="auto"){
+const uploadFileOnCloudinary = async function(localFilePath , resourceType="auto"){
     try {
         if(!localFilePath) return null
 
@@ -26,4 +26,24 @@ export const uploadFileOnCloudinary = async function(localFilePath , resourceTyp
             message:"Upload falied"
         };
     }
+}
+
+const deleteFileFromCloudinary = async function(publicId,resourceType = "image"){
+    try {
+        const result = await cloudinary.uploader.destroy(publicId,{resource_type:resourceType})
+        console.log(result)
+        return result
+
+    } catch (error) {
+        return {
+            success:false,
+            message:"deletion from cloudinary failed "
+        }
+    }
+}
+
+
+export {
+    uploadFileOnCloudinary,
+    deleteFileFromCloudinary
 }
