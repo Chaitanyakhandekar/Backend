@@ -39,8 +39,9 @@ const uploadVideo = asyncHandler(async (req, res) => {     // verifyJWT ,multer 
         description,
         duration:cloudResult.duration,
         isPublished:true,
-        owner:req.user._id
-    }) 
+        owner:req.user._id,
+        publicId:cloudResult.public_id
+    })
 
     if(!newVideo){
         throw new ApiError(404,"Server Error")
