@@ -4,6 +4,7 @@ import { uploadFileOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js"
 import { ApiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
+import { deleteFileFromCloudinary } from "../utils/cloudinary.js";
 
 
 const uploadVideo = asyncHandler(async (req, res) => {     // verifyJWT ,multer middleware
@@ -172,7 +173,7 @@ const getVideoById = asyncHandler(async (req,res)=>{        // verifyJWT middlew
     ])
 
     if(!video.length){
-        throw new ApiError(500,"Server Error")
+        throw new ApiError(500,"Video doesnt Exist")
     }
 
     return res
@@ -229,11 +230,48 @@ const updateVideo = asyncHandler(async (req,res)=>{         // verifyJWT middlew
 
 })
 
+const deleteVideo = asyncHandler(async (req,res)=>{         // verifyJWT middleware
 
+    const {id} = req.params
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const video = await Video.findById(id)
+
+    if(!video){
+        throw new ApiError(400,"Video with this ID doesnt exists")
+    }
+
+    if(req.user._id.toString() !== video.owner.toString()){
+        throw new ApiError(401,"You are not Authorized for this Request")
+    }
+
+    const isDeletedFromCloudinary = await deleteFileFromCloudinary(video.publicId,"video")
+
+    const deletedVideo = await Video.findByIdAndDelete(id)
+
+    if(!deletedVideo){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    deletedVideo,
+                    isDeletedFromCloudinary:isDeletedFromCloudinary ? true : false
+                },
+                "Video Deleted Successfully")
+            )
+    
+})
 
 export {
     uploadVideo,
     getAllVideos,
     getVideoById,
-    updateVideo
+    updateVideo,
+    deleteVideo
 }
