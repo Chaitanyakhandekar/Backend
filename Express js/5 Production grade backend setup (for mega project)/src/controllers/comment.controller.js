@@ -131,7 +131,123 @@ const getCommentsOnVideo = asyncHandler(async (req, res) => {      // verifyJWT 
 
 })
 
+const deleteComment = asyncHandler(async (req, res) => {       // verifyJWT middleware
 
+    const { id } = req.params
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        throw new ApiError(400, "Invalid ID")
+    }
+
+    const comment = await Comment.findById(id)
+
+    if (!comment) {
+        throw new ApiError(400, "Comment with this id doesnt exists")
+    }
+
+    const video = await Video.findById(comment.video)
+
+    if (!video) {
+        throw new ApiError(400, "Video doesnt exists")
+    }
+
+    if (comment.owner.toString() !== req.user._id.toString() && video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(400, "You are not Authorized for this Request")
+    }
+
+    const deletedComment = await Comment.findByIdAndDelete(id)
+
+    if (!deletedComment) {
+        throw new ApiError(500, "Server Error")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, deletedComment, "Comment Deleted Successfully")
+        )
+
+})
+
+const updateComment = asyncHandler(async (req, res) => {      // verifyJWT middleware
+
+    const { id, content } = req.body
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        throw new ApiError(400, "Invalid ID")
+    }
+
+    const comment = await Comment.findById(id)
+
+    if (!comment) {
+        throw new ApiError(400, "Comment doesnt exists")
+    }
+
+    if (comment.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(400, "You are not Authorized for this Request")
+    }
+
+    if (!content || content.trim() === "") {
+        throw new ApiError(400, "Content is Required")
+    }
+
+    const updatedComment = await Comment.findByIdAndUpdate(id, {
+        $set: {
+            content: content.trim()
+        }
+    },
+        {
+            new:true
+        })
+
+    if(!updatedComment){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,updatedComment,"Comment Updated Successfully")
+            )
+
+
+})
+
+const deleteCommentsOnVideo = asyncHandler(async (req, res) => {        // verifyJWT middleware
+
+    const {id} = req.params
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const video = await Video.findById(id)
+
+    if(!video){
+        throw new ApiError(400,"Video with this Id doesnt exists")
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(400,"You are noy Authorized for this Request")
+    }
+
+    const deletedComments = await Comment.deleteMany({
+        video:id
+    })
+
+    console.log(deletedComments)
+
+    if(!deletedComments){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,deletedComments,"Comments on this Video Deleted Successfully")
+            )
+
+})
 
 export {
     addComment,
