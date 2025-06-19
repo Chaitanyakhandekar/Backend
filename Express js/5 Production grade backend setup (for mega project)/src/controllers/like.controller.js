@@ -158,8 +158,281 @@ const toggleTweetLikes = asyncHandler(async (req,res)=>{        // verifyJWT mid
 
 })
 
+const getVideoLikesCount = asyncHandler(async (req,res)=>{           // verifyJWT middleware
+
+    
+    const likesOnly = Boolean(req.query.likesOnly) 
+    const likesWithInfo = Boolean(req.query.likesWithInfo) 
+    const id = req.query.id
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    console.log(!!likesOnly,!!likesWithInfo,id)
+
+    if(!(likesOnly || likesWithInfo)){
+        throw new ApiError(400,"One field is Required")
+    }
+
+    if(likesOnly){
+        
+         const likesCount = await Like.countDocuments({
+            video:id
+         })
+
+        let message = "Likes Count of this Video Fetched Successfully"
+
+         if(likesCount===0){
+            message = "There is no Likes on Video yet"
+         }
+
+
+         return res
+            .status(200)
+            .json(
+                new ApiResponse(200,likesCount,message)
+            )
+
+
+    }
+
+       const likedUsers = await Like.aggregate([
+            {
+                $match:{
+                    video:new mongoose.Types.ObjectId(id),
+                }
+            },
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"likedBy",
+                    foreignField:"_id",
+                    as:"likedBy",
+                    pipeline:[
+                        {
+                            $project:{
+                                username:1,
+                                fullName:1,
+                                avatar:1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind:"$likedBy"
+            },
+            {
+                $replaceRoot:{
+                    newRoot:"$likedBy"
+                }
+            }
+            
+        ])
+
+        if(!likedUsers.length){
+            throw new ApiError(500,"Server Error")
+        }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    likedUsers,
+                    likesCount:likedUsers.length
+
+                },"Likes count with Users Info")
+            )
+
+    
+})
+
+const getCommentLikesCount = asyncHandler(async (req,res)=>{           // verifyJWT middleware
+
+    
+    const likesOnly = Boolean(req.query.likesOnly) 
+    const likesWithInfo = Boolean(req.query.likesWithInfo) 
+    const id = req.query.id
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    console.log(!!likesOnly,!!likesWithInfo,id)
+
+    if(!(likesOnly || likesWithInfo)){
+        throw new ApiError(400,"One field is Required")
+    }
+
+    if(likesOnly){
+        
+         const likesCount = await Like.countDocuments({
+            comment:id
+         })
+
+        let message = "Likes Count of this Comment Fetched Successfully"
+
+         if(likesCount===0){
+            message = "There is no Likes on Comment yet"
+         }
+
+
+         return res
+            .status(200)
+            .json(
+                new ApiResponse(200,likesCount,message)
+            )
+
+
+    }
+
+       const likedUsers = await Like.aggregate([
+            {
+                $match:{
+                    comment:new mongoose.Types.ObjectId(id),
+                }
+            },
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"likedBy",
+                    foreignField:"_id",
+                    as:"likedBy",
+                    pipeline:[
+                        {
+                            $project:{
+                                username:1,
+                                fullName:1,
+                                avatar:1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind:"$likedBy"
+            },
+            {
+                $replaceRoot:{
+                    newRoot:"$likedBy"
+                }
+            }
+            
+        ])
+
+        if(!likedUsers.length){
+            throw new ApiError(500,"Server Error")
+        }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    likedUsers,
+                    likesCount:likedUsers.length
+
+                },"Likes count with Users Info")
+            )
+
+    
+})
+
+const getTweetLikesCount = asyncHandler(async (req,res)=>{           // verifyJWT middleware
+
+    
+    const likesOnly = Boolean(req.query.likesOnly) 
+    const likesWithInfo = Boolean(req.query.likesWithInfo) 
+    const id = req.query.id
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    console.log(!!likesOnly,!!likesWithInfo,id)
+
+    if(!(likesOnly || likesWithInfo)){
+        throw new ApiError(400,"One field is Required")
+    }
+
+    if(likesOnly){
+        
+         const likesCount = await Like.countDocuments({
+            tweet:id
+         })
+
+        let message = "Likes Count of this Tweet Fetched Successfully"
+
+         if(likesCount===0){
+            message = "There is no Likes on Tweet yet"
+         }
+
+
+         return res
+            .status(200)
+            .json(
+                new ApiResponse(200,likesCount,message)
+            )
+
+
+    }
+
+       const likedUsers = await Like.aggregate([
+            {
+                $match:{
+                    tweet:new mongoose.Types.ObjectId(id),
+                }
+            },
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"likedBy",
+                    foreignField:"_id",
+                    as:"likedBy",
+                    pipeline:[
+                        {
+                            $project:{
+                                username:1,
+                                fullName:1,
+                                avatar:1
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind:"$likedBy"
+            },
+            {
+                $replaceRoot:{
+                    newRoot:"$likedBy"
+                }
+            }
+            
+        ])
+
+        if(!likedUsers){
+            throw new ApiError(500,"Server Error")
+        }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    likedUsers,
+                    likesCount:likedUsers.length
+
+                },"Likes count with Users Info")
+            )
+
+    
+})
+
 export {
     toggleVideoLike,
     toggleCommentLike,
-    toggleTweetLikes
+    toggleTweetLikes,
+    getVideoLikesCount,
+    getCommentLikesCount,
+    getTweetLikesCount
 }
