@@ -25,6 +25,7 @@ import tweetRouter from "./routes/tweet.route.js"
 import commentRouter from "./routes/comment.route.js"
 import subscriptionRouter from "./routes/subscription.route.js"
 import videoRouter from "./routes/video.route.js"
+import likeRouter from "./routes/like.route.js"
 
 
 // routes declaration
@@ -34,5 +35,6 @@ server.use("/api/v1/tweets", tweetRouter)
 server.use("/api/v1/comments", commentRouter)
 server.use("/api/v1/subscriptions", subscriptionRouter)
 server.use("/api/v1/videos", videoRouter)
+server.use("/api/v1/likes" , likeRouter)
 
 export {server}
