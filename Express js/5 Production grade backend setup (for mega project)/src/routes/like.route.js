@@ -7,7 +7,8 @@ import
     toggleTweetLikes,
     getVideoLikesCount,
      getCommentLikesCount,
-    getTweetLikesCount
+    getTweetLikesCount,
+    isLikedTo
 }
 from "../controllers/like.controller.js"
 
@@ -19,5 +20,6 @@ router.route("/toogle-like-tweet/:id").get(verifyJWT,toggleTweetLikes)
 router.route("/likes-count-video/").get(verifyJWT,getVideoLikesCount)
 router.route("/likes-count-comment/").get(verifyJWT,getCommentLikesCount)
 router.route("/likes-count-tweet/").get(verifyJWT,getTweetLikesCount)
+router.route("/is-liked/").get(verifyJWT,isLikedTo)
 
-export default router;
+export default router;  

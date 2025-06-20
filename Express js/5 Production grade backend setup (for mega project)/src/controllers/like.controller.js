@@ -428,11 +428,44 @@ const getTweetLikesCount = asyncHandler(async (req,res)=>{           // verifyJW
     
 })
 
+const isLikedTo = asyncHandler(async (req,res)=>{
+
+    const id = req.query.id
+    const to = req.query.to
+
+    if(!id || !mongoose.Types.ObjectId.isValid(id)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    if(!to){
+        throw new ApiError(400,"Its Required Field")
+    }
+
+    let search = {
+        [to]:id,
+        likedBy:req.user._id
+    }
+
+    const isLiked = await Like.findOne(search)
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    likedTo:to,
+                    isLiked:isLiked && true || false
+                },
+                isLiked ? `You are Liked to this ${to}` : `You are not Liked this ${to} yet`
+            ))
+})
+
+
 export {
     toggleVideoLike,
     toggleCommentLike,
     toggleTweetLikes,
     getVideoLikesCount,
     getCommentLikesCount,
-    getTweetLikesCount
+    getTweetLikesCount,
+    isLikedTo
 }
