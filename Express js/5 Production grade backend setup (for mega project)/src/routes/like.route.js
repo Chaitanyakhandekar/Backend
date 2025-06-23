@@ -9,7 +9,8 @@ import
     getVideoLikesCount,
      getCommentLikesCount,
     getTweetLikesCount,
-    isLikedTo
+    isLikedTo,
+    clearAllLikes
 }
 from "../controllers/like.controller.js"
 
@@ -22,5 +23,6 @@ router.route("/likes-count-video/").get(verifyJWT,getVideoLikesCount)
 router.route("/likes-count-comment/").get(verifyJWT,getCommentLikesCount)
 router.route("/likes-count-tweet/").get(verifyJWT,getTweetLikesCount)
 router.route("/is-liked/").get(verifyJWT,fieldNameType,isLikedTo)
+router.route("/clear-all/").get(verifyJWT,fieldNameType,clearAllLikes)
 
 export default router;  

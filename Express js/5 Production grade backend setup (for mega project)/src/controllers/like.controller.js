@@ -428,9 +428,10 @@ const getTweetLikesCount = asyncHandler(async (req,res)=>{           // verifyJW
     
 })
 
-const isLikedTo = asyncHandler(async (req,res)=>{
+const isLikedTo = asyncHandler(async (req,res)=>{       // verifyJWT , fieldNameType middlewares
 
-    const isLiked = await Like.findOne(req.search)
+    const search = {...req.search , likedBy:req.user._id}
+    const isLiked = await Like.findOne(search)
 
     return res
             .status(200)
@@ -443,6 +444,21 @@ const isLikedTo = asyncHandler(async (req,res)=>{
             ))
 })
 
+const clearAllLikes = asyncHandler(async (req,res)=>{
+    
+    const isCleared = await Like.deleteMany(req.search)
+
+    if(!isCleared){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,isCleared,`All Likes of ${req.info.to} Cleared`)
+            )
+})
+
 
 export {
     toggleVideoLike,
@@ -451,5 +467,6 @@ export {
     getVideoLikesCount,
     getCommentLikesCount,
     getTweetLikesCount,
-    isLikedTo
+    isLikedTo,
+    clearAllLikes
 }
