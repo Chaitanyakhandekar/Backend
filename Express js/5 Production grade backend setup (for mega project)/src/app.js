@@ -26,6 +26,7 @@ import commentRouter from "./routes/comment.route.js"
 import subscriptionRouter from "./routes/subscription.route.js"
 import videoRouter from "./routes/video.route.js"
 import likeRouter from "./routes/like.route.js"
+import playlistRouter from "./routes/playlist.route.js"
 
 
 // routes declaration
@@ -36,5 +37,6 @@ server.use("/api/v1/comments", commentRouter)
 server.use("/api/v1/subscriptions", subscriptionRouter)
 server.use("/api/v1/videos", videoRouter)
 server.use("/api/v1/likes" , likeRouter)
+server.use("/api/v1/playlists" , playlistRouter)
 
 export {server}
