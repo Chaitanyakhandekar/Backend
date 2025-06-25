@@ -78,7 +78,50 @@ const updatePlaylist = asyncHandler(async (req,res)=>{      // verifyJWT , valid
 
 })
 
+const addVideoToPlaylist = asyncHandler(async (req,res)=>{     // verifyJWT , validateOwnership middlewre
+
+    const video = req.body.video
+
+    if(!video || !mongoose.Types.ObjectId.isValid(video)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const isExists = await Playlist.findById(req.info.pid)
+
+    if(!isExists){
+        throw new ApiError(400,"This Playlist Doesn't Exists")
+    }
+
+    if(isExists.videos.some(v => v.toString() === video)){
+        throw new ApiError(400,"Video is Already Present in this Playlist")
+     }
+
+    const addedVideo = await Playlist.findByIdAndUpdate(
+        req.info.pid,
+        {
+            $addToSet:{
+                videos:video
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    if(!addedVideo){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,addedVideo,"Video Added to Playlist Successfully")
+            )
+
+})
+
 export {
     createPlaylist,
-    updatePlaylist
+    updatePlaylist,
+    addVideoToPlaylist
 }
