@@ -184,6 +184,10 @@ const deletePlaylist = asyncHandler(async (req,res)=>{      // verifyJWT , valid
 
 })
 
+const getUserPlaylists = asyncHandler(async (req,res)=>{        // verifyJWT middleware
+
+})
+
 export {
     createPlaylist,
     updatePlaylist,
