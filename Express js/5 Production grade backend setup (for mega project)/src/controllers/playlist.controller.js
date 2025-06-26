@@ -186,6 +186,70 @@ const deletePlaylist = asyncHandler(async (req,res)=>{      // verifyJWT , valid
 
 const getUserPlaylists = asyncHandler(async (req,res)=>{        // verifyJWT middleware
 
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 5
+    const skip = (page - 1) * limit
+
+    const totalUserPlaylists = await Playlist.countDocuments({
+        owner:req.user._id
+    })
+
+    if(totalUserPlaylists===0){
+        return res
+                .status(200)
+                .json(
+                    new ApiResponse(200,null,"You Havent Created Playlists")
+                ) 
+    }
+
+    const userPlaylists = await Playlist.aggregate([
+        {
+            $match:{
+                owner:new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $sort:{createdAt:-1}
+        },
+        {
+            $skip:skip
+        },
+        {
+            $limit:limit
+        },
+        {
+            $project:{
+                name:1,
+                description:1,
+                totalVideos:{
+                    $size:"$videos"
+                },
+                createdAt:1,
+                updatedAt:1
+            }
+        }    
+       
+    ])
+
+    if(!userPlaylists.length){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,{
+                    
+                    userPlaylists,
+                    page,
+                    limit,
+                    totalUserPlaylists,
+                    totalPages:Math.ceil(totalUserPlaylists / limit),
+                    hasMore: page * limit < totalUserPlaylists
+                },
+                "Successfully Fetched User Playlists")
+            )
+
 })
 
 export {
@@ -193,5 +257,6 @@ export {
     updatePlaylist,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
-    deletePlaylist
+    deletePlaylist,
+    getUserPlaylists
 }

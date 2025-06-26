@@ -5,7 +5,8 @@ import
     updatePlaylist,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
-    deletePlaylist
+    deletePlaylist,
+    getUserPlaylists
 }
 from "../controllers/playlist.controller.js"
 import { verifyJWT } from "../middlewares/authenticate.middleware.js";
@@ -18,5 +19,6 @@ router.route("/update").patch(verifyJWT,validateOwnership,updatePlaylist)
 router.route("/delete/:pid").get(verifyJWT,validateOwnership,deletePlaylist)
 router.route("/add-video").post(verifyJWT,validateOwnership,addVideoToPlaylist)
 router.route("/remove-video/").get(verifyJWT,validateOwnership,removeVideoFromPlaylist)
+router.route("/my").get(verifyJWT,getUserPlaylists)
 
 export default router;
