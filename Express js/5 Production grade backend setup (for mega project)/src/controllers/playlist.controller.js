@@ -162,9 +162,32 @@ const removeVideoFromPlaylist = asyncHandler(async (req,res)=>{     // verifyJWT
 
 })
 
+const deletePlaylist = asyncHandler(async (req,res)=>{      // verifyJWT , validateOwnership middlewre
+
+    const isExists = await Playlist.findById(req.info.pid)
+
+    if(!isExists){
+        throw new ApiError(400,"Playlist Doesnt Exists")
+    }
+
+    const deletedPlaylist = await Playlist.findByIdAndDelete(req.info.pid)
+
+    if(!deletedPlaylist){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,deletedPlaylist,"Playlist Deleted Successfully")
+            )
+
+})
+
 export {
     createPlaylist,
     updatePlaylist,
     addVideoToPlaylist,
-    removeVideoFromPlaylist
+    removeVideoFromPlaylist,
+    deletePlaylist
 }
