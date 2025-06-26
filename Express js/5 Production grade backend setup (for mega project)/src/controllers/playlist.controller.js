@@ -252,11 +252,114 @@ const getUserPlaylists = asyncHandler(async (req,res)=>{        // verifyJWT mid
 
 })
 
+const getVideosInPlaylist = asyncHandler(async (req,res)=>{     // verifyJWT , validateOwnerShip middleware
+
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
+
+    const totalVideos = await Playlist.findById(req.info.pid)
+
+    if(!totalVideos){
+        throw new ApiError(400,"Playlist Doesnt Exists")
+    }
+
+    if(totalVideos.videos.length===0){
+        return res
+                .status(200)
+                .json(
+                    new ApiResponse(200,null,"No Videos in this Playlist")
+                )
+    }
+
+    const videos = await Playlist.aggregate([
+        {
+            $match:{
+                _id:new mongoose.Types.ObjectId(req.info.pid)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"videos",
+                foreignField:"_id",
+                as:"videos",
+                pipeline:[
+                    {
+                        $sort:{createdAt:-1}
+                    },
+                    {
+                        $skip:skip
+                    },
+                    {
+                        $limit:limit
+                    },
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner"
+                        }
+                    },
+                    {
+                        $unwind:"$owner"
+                    },
+                    {
+                        $project:{
+                            videoUrl:1,
+                            thumbnail:1,
+                            title:1,
+                            description:1,
+                            duration:1,
+                            views:1,
+                            owner:{
+                                _id:1,
+                                username:1,
+                                fullName:1,
+                                avatar:1
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $project:{
+                videos:"$videos"
+            }
+        },
+  
+    ])
+
+    if(!videos.length){
+        throw new ApiError(500,"Server Error")
+    }
+
+     return res
+                .status(200)
+                .json(
+                    new ApiResponse(200,{
+
+                        videos:videos[0].videos,
+                        page,
+                        limit,
+                        totalVideos:totalVideos.videos.length,
+                        totalPages:Math.ceil(totalVideos.videos.length / limit),
+                        hasMore: page * limit < totalVideos.videos.length
+
+                    },
+                    "Videos in Playlist Fetched Successfully")
+                )
+
+})
+
 export {
     createPlaylist,
     updatePlaylist,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
     deletePlaylist,
-    getUserPlaylists
+    getUserPlaylists,
+    getVideosInPlaylist
 }
