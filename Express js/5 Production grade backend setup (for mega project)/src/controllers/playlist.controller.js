@@ -120,8 +120,51 @@ const addVideoToPlaylist = asyncHandler(async (req,res)=>{     // verifyJWT , va
 
 })
 
+const removeVideoFromPlaylist = asyncHandler(async (req,res)=>{     // verifyJWT , validateOwnership middlewre
+
+    const {pid,vid} = req.info
+
+    if(!vid || !mongoose.Types.ObjectId.isValid(vid)){
+        throw new ApiError(400,"Invalid ID")
+    }
+
+    const isExistsPlaylist = await Playlist.findById(pid)
+
+    if(!isExistsPlaylist){
+        throw new ApiError(400,"Playlist with given ID doesnt Exists")
+    }
+
+    if(!isExistsPlaylist.videos.some(v => v.toString() === vid)){
+        throw new ApiError(400,"Video with This ID doesnt Exists in This Playlist")
+    }
+
+    const removedVideo = await Playlist.findByIdAndUpdate(
+        pid,
+        {
+            $pull:{
+                videos:vid
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    if(!removedVideo){
+        throw new ApiError(500,"Server Error")
+    }
+
+    return res
+            .status(200)
+            .json(
+                new ApiResponse(200,removedVideo,"Video removed from Playlist Successfully")
+            )
+
+})
+
 export {
     createPlaylist,
     updatePlaylist,
-    addVideoToPlaylist
+    addVideoToPlaylist,
+    removeVideoFromPlaylist
 }

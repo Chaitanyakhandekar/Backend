@@ -5,7 +5,8 @@ import { ApiError } from "../utils/apiError.js";
 
 export const validateOwnership = asyncHandler(async (req,res,next)=>{
 
-    const pid = req.body.pid || req.query.pid
+    const pid = req.body?.pid || req.query?.pid || req.params?.pid
+    const vid = req.query?.vid || null
 
     if(!pid || !mongoose.Types.ObjectId.isValid(pid)){
         throw new ApiError(400,"Invalid ID")
@@ -21,7 +22,8 @@ export const validateOwnership = asyncHandler(async (req,res,next)=>{
     }
 
     req.info = {
-        pid
+        pid,
+        vid
     }
 
     next()
